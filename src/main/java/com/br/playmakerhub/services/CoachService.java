@@ -1,9 +1,11 @@
 package com.br.playmakerhub.services;
 
+import com.br.playmakerhub.exceptions.ObjectNotFoundException;
 import com.br.playmakerhub.models.Coach;
-import com.br.playmakerhub.models.Player;
 import com.br.playmakerhub.repositories.CoachRepository;
 import com.br.playmakerhub.repositories.PlayerRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +14,9 @@ import java.util.Optional;
 
 @Service
 public class CoachService {
+
+    private static final Logger logger = LogManager.getLogger(PlayerService.class);
+
 
     @Autowired
     private CoachRepository repository;
@@ -34,21 +39,10 @@ public class CoachService {
         return repository.save(coach);
     }
 
-    public Coach addPlayerToCoach(String coachId, Player player) {
-        Optional<Coach> coachOpt = repository.findById(coachId);
 
-        if (coachOpt.isPresent()) {
-            Coach coach = coachOpt.get();
-
-            Player savedPlayer = playerRepository.save(player);
-
-            List<Player> players = coach.getPlayers();
-            players.add(savedPlayer);
-            coach.setPlayers(players);
-
-            return repository.save(coach);
-        } else {
-            throw new IllegalArgumentException("Coach not found");
-        }
+    public void deleteCoach(String id) {
+        Coach coach = repository.findById(id).orElseThrow(() -> new ObjectNotFoundException(
+                "No technician found with this ID"));
+        repository.delete(coach);
     }
 }

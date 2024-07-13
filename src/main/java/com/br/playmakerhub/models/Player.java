@@ -1,11 +1,14 @@
 package com.br.playmakerhub.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 @Data
-@Document(collection = "player")
+@Document(collection = "players")
 public class Player {
 
     @Id
@@ -15,15 +18,17 @@ public class Player {
 
     private String lastName;
 
+    private String kitNumber;
+
     private String nationality;
 
     private String position;
-
-    private String kitNumber;
 
     private String joined;
 
     private String urlImagePlayer;
 
-    private Statistics statistics;
+    private List<Statistics> statisticsBySeasons;
+
+    private StatisticsHistory statisticsHistory;
 }

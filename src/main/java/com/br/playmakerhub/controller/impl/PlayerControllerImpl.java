@@ -1,8 +1,7 @@
-package com.br.playmakerhub.controller;
+package com.br.playmakerhub.controller.impl;
 
-import com.br.playmakerhub.models.Coach;
+import com.br.playmakerhub.controller.IPlayerController;
 import com.br.playmakerhub.models.Player;
-import com.br.playmakerhub.services.CoachService;
 import com.br.playmakerhub.services.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,32 +13,36 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/players")
-
-public class PlayerController {
+public class PlayerControllerImpl implements IPlayerController {
 
     @Autowired
     PlayerService service;
 
-    @Autowired
-    CoachService coachService;
 
-    @GetMapping
+    @Override
+    public ResponseEntity<Player> getPlayerById(String id) {
+        Player player = service.getPlayerById(id);
+        return ResponseEntity.ok().body(player);
+    }
+
+    @Override
     public ResponseEntity<List<Player>> getAllPlayers() {
         List<Player> players = service.getAllPlayers();
-
         return ResponseEntity.ok().body(players);
     }
-    @PostMapping
-    public ResponseEntity<Player> createPlayer(@RequestBody Player player) {
+
+
+    @Override
+    public ResponseEntity<Player> createPlayer(Player player) throws IllegalAccessException {
         Player playersCreated = service.createPlayer(player);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(playersCreated.getId()).toUri();
         return ResponseEntity.created(uri).build();
     }
 
-    @PostMapping("/addToCoach/{coachId}")
-    public ResponseEntity<Coach> addPlayerToCoach(@PathVariable String coachId, @RequestBody Player player) {
-        Coach updatedCoach = coachService.addPlayerToCoach(coachId, player);
-        return ResponseEntity.ok(updatedCoach);
+    @Override
+    public ResponseEntity<Void> deletePlayer(String id) {
+        service.deletePlayer(id);
+        return ResponseEntity.noContent().build();
     }
 }

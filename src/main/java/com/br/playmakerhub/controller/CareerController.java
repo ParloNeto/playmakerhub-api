@@ -1,7 +1,9 @@
 package com.br.playmakerhub.controller;
 
-import com.br.playmakerhub.models.Coach;
-import com.br.playmakerhub.services.CoachService;
+import com.br.playmakerhub.models.Career;
+import com.br.playmakerhub.models.Player;
+import com.br.playmakerhub.models.Season;
+import com.br.playmakerhub.services.CareerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,21 +22,21 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/coaches")
-@Tag(name = "Coach", description = "Endpoints for Managing Coaches")
-public class CoachController {
+@RequestMapping(value = "/careers")
+@Tag(name = "Career", description = "Endpoints for Managing Careers")
+public class CareerController {
 
     @Autowired
-    CoachService service;
+    CareerService service;
 
     private static final Logger logger = LogManager.getLogger(IPlayerController.class);
-    @GetMapping("/{coachId}")
-    @Operation(summary = "Finds a Coach", description = "Finds a Coach",
-            tags = {"Coach"},
+    @GetMapping("/{careerId}")
+    @Operation(summary = "Finds a Career", description = "Finds a Career",
+            tags = {"Career"},
             responses = {
                     @ApiResponse(description = "Success", responseCode = "200",
                             content = {
-                                    @Content(schema = @Schema(implementation = Coach.class))
+                                    @Content(schema = @Schema(implementation = Career.class))
                             }),
                     @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
                     @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
@@ -43,22 +45,22 @@ public class CoachController {
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             }
     )
-    public ResponseEntity<Coach> getCoachById(@PathVariable String coachId) {
-        logger.info("getCoachById() is called.");
-        Coach coach = service.getCoachById(coachId);
-        logger.info("getCoachById() is finished.");
-        return ResponseEntity.ok().body(coach);
+    public ResponseEntity<Career> getCareerById(@PathVariable String careerId) {
+        logger.info("getCareerById() is called.");
+        Career career = service.getCareerById(careerId);
+        logger.info("getCareerById() is finished.");
+        return ResponseEntity.ok().body(career);
     }
 
     @GetMapping
-    @Operation(summary = "Find all Coaches", description = "Find all Coaches",
-            tags = {"Coach"},
+    @Operation(summary = "Find all Careers", description = "Find all Careers",
+            tags = {"Career"},
             responses = {
                     @ApiResponse(description = "Success", responseCode = "200",
                             content = {
                                     @Content(
                                             mediaType = "application/json",
-                                            array = @ArraySchema(schema = @Schema(implementation = Coach.class))
+                                            array = @ArraySchema(schema = @Schema(implementation = Career.class))
                                     )
                             }),
                     @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
@@ -68,36 +70,56 @@ public class CoachController {
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             }
     )
-    public ResponseEntity<List<Coach>> getAllCoaches() {
-        logger.info("getAllCoaches() is called.");
-        List<Coach> coachs = service.getAllCoaches();
-        logger.info("getAllCoaches() is finished.");
-        return ResponseEntity.ok().body(coachs);
+    public ResponseEntity<List<Career>> getAllCareers() {
+        logger.info("getAllCareers() is called.");
+        List<Career> careers = service.getAllCareers();
+        logger.info("getAllCareers() is finished.");
+        return ResponseEntity.ok().body(careers);
     }
 
 
     @PostMapping
-    @Operation(summary = "Create a new Coach",
-            description = "Create a new Coach",
-            tags = {"Coach"},
+    @Operation(summary = "Create a new Career",
+            description = "Create a new Career",
+            tags = {"Career"},
             responses = {
                     @ApiResponse(description = "Success", responseCode = "200",
                             content = {
-                                    @Content(schema = @Schema(implementation = Coach.class))
+                                    @Content(schema = @Schema(implementation = Career.class))
                             }),
                     @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
                     @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             })
-    public ResponseEntity<Coach> createCoach(@RequestBody Coach coach) {
-        Coach coachCreated = service.createCoach(coach);
-        return ResponseEntity.status(HttpStatus.CREATED).body(coachCreated);
+    public ResponseEntity<Career> createCareer(@RequestBody Career career) {
+        Career careerCreated = service.createCareer(career);
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(careerCreated.getId()).toUri();
+        return ResponseEntity.created(uri).build();
+    }
+
+    @PostMapping("/{careerId}/{typeSeason}")
+    public ResponseEntity<Career> createPlayerToCareer(@RequestBody Player player, @PathVariable String typeSeason, @PathVariable String careerId) {
+        Career careerAtuc = service.addPlayerToCareer(careerId, player, typeSeason);
+        return ResponseEntity.status(HttpStatus.CREATED).body(careerAtuc);
+    }
+
+    @PostMapping("/{careerId}/seasons")
+    public ResponseEntity<Career> addSeasonToCareer(@RequestBody Season season, @PathVariable String careerId) {
+        Career careerAtuc = service.addSeasonToCareer(careerId, season);
+        return ResponseEntity.status(HttpStatus.CREATED).body(careerAtuc);
+    }
+
+    @GetMapping("/{careerId}/players")
+    public ResponseEntity<List<Player>> getPlayerOfCareer(@PathVariable String careerId) {
+        List<Player> playersList = service.getPlayersOfCareer(careerId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(playersList);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a Coach",
-            description = "Delete a Coach",
-            tags = {"Coach"},
+    @Operation(summary = "Delete a Career",
+            description = "Delete a Career",
+            tags = {"Career"},
             method = "DELETE",
             responses = {
                     @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
@@ -106,10 +128,10 @@ public class CoachController {
                     @ApiResponse(description = "Not Found", responseCode = "404", content = @Content),
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             })
-    public ResponseEntity<Void> deleteCoach(@PathVariable String id) {
-        logger.info("deleteCoach() is called.");
-        service.deleteCoach(id);
-        logger.info("deleteCoach() is finished.");
+    public ResponseEntity<Void> deleteCareer(@PathVariable String id) {
+        logger.info("deleteCareer() is called.");
+        service.deleteCareer(id);
+        logger.info("deleteCareer() is finished.");
         return ResponseEntity.noContent().build();
     }
 }

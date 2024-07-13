@@ -1,7 +1,7 @@
 package com.br.playmakerhub.controller;
 
-import com.br.playmakerhub.models.Coach;
-import com.br.playmakerhub.services.CoachService;
+import com.br.playmakerhub.models.Season;
+import com.br.playmakerhub.services.SeasonService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -20,21 +20,21 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/coaches")
-@Tag(name = "Coach", description = "Endpoints for Managing Coaches")
-public class CoachController {
+@RequestMapping(value = "/seasons")
+@Tag(name = "Season", description = "Endpoints for Managing Seasons")
+public class SeasonController {
 
     @Autowired
-    CoachService service;
+    SeasonService service;
 
     private static final Logger logger = LogManager.getLogger(IPlayerController.class);
-    @GetMapping("/{coachId}")
-    @Operation(summary = "Finds a Coach", description = "Finds a Coach",
-            tags = {"Coach"},
+    @GetMapping("/{seasonId}")
+    @Operation(summary = "Finds a Season", description = "Finds a Season",
+            tags = {"Season"},
             responses = {
                     @ApiResponse(description = "Success", responseCode = "200",
                             content = {
-                                    @Content(schema = @Schema(implementation = Coach.class))
+                                    @Content(schema = @Schema(implementation = Season.class))
                             }),
                     @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
                     @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
@@ -43,22 +43,22 @@ public class CoachController {
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             }
     )
-    public ResponseEntity<Coach> getCoachById(@PathVariable String coachId) {
-        logger.info("getCoachById() is called.");
-        Coach coach = service.getCoachById(coachId);
-        logger.info("getCoachById() is finished.");
-        return ResponseEntity.ok().body(coach);
+    public ResponseEntity<Season> getSeasonById(@PathVariable String seasonId) {
+        logger.info("getSeasonById() is called.");
+        Season season = service.getSeasonById(seasonId);
+        logger.info("getSeasonById() is finished.");
+        return ResponseEntity.ok().body(season);
     }
 
     @GetMapping
-    @Operation(summary = "Find all Coaches", description = "Find all Coaches",
-            tags = {"Coach"},
+    @Operation(summary = "Find all Seasons", description = "Find all Seasons",
+            tags = {"Season"},
             responses = {
                     @ApiResponse(description = "Success", responseCode = "200",
                             content = {
                                     @Content(
                                             mediaType = "application/json",
-                                            array = @ArraySchema(schema = @Schema(implementation = Coach.class))
+                                            array = @ArraySchema(schema = @Schema(implementation = Season.class))
                                     )
                             }),
                     @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
@@ -68,36 +68,36 @@ public class CoachController {
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             }
     )
-    public ResponseEntity<List<Coach>> getAllCoaches() {
-        logger.info("getAllCoaches() is called.");
-        List<Coach> coachs = service.getAllCoaches();
-        logger.info("getAllCoaches() is finished.");
-        return ResponseEntity.ok().body(coachs);
+    public ResponseEntity<List<Season>> getAllSeasons() {
+        logger.info("getAllSeasons() is called.");
+        List<Season> seasons = service.getAllSeasons();
+        logger.info("getAllSeasons() is finished.");
+        return ResponseEntity.ok().body(seasons);
     }
 
 
     @PostMapping
-    @Operation(summary = "Create a new Coach",
-            description = "Create a new Coach",
-            tags = {"Coach"},
+    @Operation(summary = "Create a new Season",
+            description = "Create a new Season",
+            tags = {"Season"},
             responses = {
                     @ApiResponse(description = "Success", responseCode = "200",
                             content = {
-                                    @Content(schema = @Schema(implementation = Coach.class))
+                                    @Content(schema = @Schema(implementation = Season.class))
                             }),
                     @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
                     @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             })
-    public ResponseEntity<Coach> createCoach(@RequestBody Coach coach) {
-        Coach coachCreated = service.createCoach(coach);
-        return ResponseEntity.status(HttpStatus.CREATED).body(coachCreated);
+    public ResponseEntity<Season> createSeason(@RequestBody Season season) {
+        Season seasonCreated = service.createSeason(season);
+        return ResponseEntity.status(HttpStatus.CREATED).body(seasonCreated);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a Coach",
-            description = "Delete a Coach",
-            tags = {"Coach"},
+    @Operation(summary = "Delete a Season",
+            description = "Delete a Season",
+            tags = {"Season"},
             method = "DELETE",
             responses = {
                     @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
@@ -106,10 +106,10 @@ public class CoachController {
                     @ApiResponse(description = "Not Found", responseCode = "404", content = @Content),
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             })
-    public ResponseEntity<Void> deleteCoach(@PathVariable String id) {
-        logger.info("deleteCoach() is called.");
-        service.deleteCoach(id);
-        logger.info("deleteCoach() is finished.");
+    public ResponseEntity<Void> deleteSeason(@PathVariable String id) {
+        logger.info("deleteSeason() is called.");
+        service.deleteSeason(id);
+        logger.info("deleteSeason() is finished.");
         return ResponseEntity.noContent().build();
     }
 }
