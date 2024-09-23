@@ -1,5 +1,8 @@
 package com.br.playmakerhub.controller;
 
+import com.br.playmakerhub.dto.CareerDTO;
+import com.br.playmakerhub.dto.PlayerDTO;
+import com.br.playmakerhub.dto.SeasonDTO;
 import com.br.playmakerhub.models.Career;
 import com.br.playmakerhub.models.Player;
 import com.br.playmakerhub.models.Season;
@@ -46,10 +49,54 @@ public class CareerController {
             }
     )
     public ResponseEntity<Career> getCareerById(@PathVariable String careerId) {
-        logger.info("getCareerById() is called.");
         Career career = service.getCareerById(careerId);
-        logger.info("getCareerById() is finished.");
         return ResponseEntity.ok().body(career);
+    }
+
+    @GetMapping("/{careerId}/{typeSeason}")
+    @Operation(summary = "Find all Players by Season of Career", description = "Find all Players by Season of Career",
+            tags = {"Career"},
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200",
+                            content = {
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Player.class))
+                                    )
+                            }),
+                    @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
+                    @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
+                    @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
+                    @ApiResponse(description = "Not Found", responseCode = "404", content = @Content),
+                    @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
+            }
+    )
+    public ResponseEntity<List<Player>> getAllPlayersBySeasonAndCareer(@PathVariable String careerId, @PathVariable String typeSeason) {
+        List<Player> playersList = service.getAllPlayersBySeasonAndCareer(careerId, typeSeason);
+        return ResponseEntity.status(HttpStatus.OK).body(playersList);
+    }
+
+    @GetMapping("/{careerId}/{typeSeason}/{positionPlayer}")
+    @Operation(summary = "Find all Players by Season of Career", description = "Find all Players by Season of Career",
+            tags = {"Career"},
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200",
+                            content = {
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Player.class))
+                                    )
+                            }),
+                    @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
+                    @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
+                    @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
+                    @ApiResponse(description = "Not Found", responseCode = "404", content = @Content),
+                    @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
+            }
+    )
+    public ResponseEntity<List<Player>> getAllPlayersBySeasonAndCareerFilteredByPosition(@PathVariable String careerId, @PathVariable String typeSeason, @PathVariable String positionPlayer) {
+        List<Player> playersListFiltered = service.getAllPlayersBySeasonAndCareerByPosition(careerId, typeSeason, positionPlayer);
+        return ResponseEntity.status(HttpStatus.OK).body(playersListFiltered);
     }
 
     @GetMapping
@@ -71,9 +118,7 @@ public class CareerController {
             }
     )
     public ResponseEntity<List<Career>> getAllCareers() {
-        logger.info("getAllCareers() is called.");
         List<Career> careers = service.getAllCareers();
-        logger.info("getAllCareers() is finished.");
         return ResponseEntity.ok().body(careers);
     }
 
@@ -91,22 +136,28 @@ public class CareerController {
                     @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             })
-    public ResponseEntity<Career> createCareer(@RequestBody Career career) {
-        Career careerCreated = service.createCareer(career);
+    public ResponseEntity<Career> createCareer(@RequestBody CareerDTO careerDTO) {
+        Career careerCreated = service.createCareer(careerDTO);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(careerCreated.getId()).toUri();
         return ResponseEntity.created(uri).build();
     }
 
     @PostMapping("/{careerId}/{typeSeason}")
-    public ResponseEntity<Career> createPlayerToCareer(@RequestBody Player player, @PathVariable String typeSeason, @PathVariable String careerId) {
-        Career careerAtuc = service.addPlayerToCareer(careerId, player, typeSeason);
+    public ResponseEntity<Career> createPlayerToCareer(@RequestBody PlayerDTO playerDto, @PathVariable String typeSeason, @PathVariable String careerId) {
+        Career careerAtuc = service.addPlayerToCareer(careerId, playerDto, typeSeason);
         return ResponseEntity.status(HttpStatus.CREATED).body(careerAtuc);
     }
 
+    @GetMapping("/{careerId}/seasons")
+    public ResponseEntity<List<Season>> getSeasonsByCareer(@PathVariable String careerId) {
+        List<Season> seasonList = service.getSeasonsByCareer(careerId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(seasonList);
+    }
+
     @PostMapping("/{careerId}/seasons")
-    public ResponseEntity<Career> addSeasonToCareer(@RequestBody Season season, @PathVariable String careerId) {
-        Career careerAtuc = service.addSeasonToCareer(careerId, season);
+    public ResponseEntity<Career> addSeasonToCareer(@RequestBody SeasonDTO seasonDTO, @PathVariable String careerId) {
+        Career careerAtuc = service.addSeasonToCareer(careerId, seasonDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(careerAtuc);
     }
 
@@ -129,9 +180,7 @@ public class CareerController {
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             })
     public ResponseEntity<Void> deleteCareer(@PathVariable String id) {
-        logger.info("deleteCareer() is called.");
         service.deleteCareer(id);
-        logger.info("deleteCareer() is finished.");
         return ResponseEntity.noContent().build();
     }
 }

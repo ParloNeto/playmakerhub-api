@@ -1,11 +1,14 @@
 package com.br.playmakerhub.controller.impl;
 
 import com.br.playmakerhub.controller.IPlayerController;
+import com.br.playmakerhub.dto.PlayerDTO;
+import com.br.playmakerhub.mapper.PlayerMapper;
 import com.br.playmakerhub.models.Player;
 import com.br.playmakerhub.services.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -33,11 +36,20 @@ public class PlayerControllerImpl implements IPlayerController {
 
 
     @Override
-    public ResponseEntity<Player> createPlayer(Player player) throws IllegalAccessException {
-        Player playersCreated = service.createPlayer(player);
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(playersCreated.getId()).toUri();
-        return ResponseEntity.created(uri).build();
+    public ResponseEntity<Player> createPlayer(PlayerDTO playerDto) {
+
+        Player playerCreated = service.createPlayer(playerDto);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(playerCreated.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(playerCreated);
+    }
+
+    @Override
+    public ResponseEntity<Player> updatePlayer(Player player) {
+        service.updatePlayer(player);
+        return ResponseEntity.ok().body(player);
     }
 
     @Override

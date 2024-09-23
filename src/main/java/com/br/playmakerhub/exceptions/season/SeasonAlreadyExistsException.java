@@ -1,4 +1,4 @@
-package com.br.playmakerhub.exceptions;
+package com.br.playmakerhub.exceptions.season;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

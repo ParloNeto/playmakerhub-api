@@ -1,6 +1,8 @@
 package com.br.playmakerhub.services;
 
+import com.br.playmakerhub.dto.CoachDTO;
 import com.br.playmakerhub.exceptions.ObjectNotFoundException;
+import com.br.playmakerhub.mapper.CoachMapper;
 import com.br.playmakerhub.models.Coach;
 import com.br.playmakerhub.repositories.CoachRepository;
 import com.br.playmakerhub.repositories.PlayerRepository;
@@ -32,10 +34,13 @@ public class CoachService {
         Optional<Coach> coach = repository.findById(id);
         return coach.orElse(null);
     }
-    public Coach createCoach(Coach coach) {
-        if (coach == null) {
+    public Coach createCoach(CoachDTO coachDTO) {
+        if (coachDTO == null) {
             throw new IllegalArgumentException("Coach cannot be null");
         }
+
+        Coach coach = CoachMapper.INSTANCE.coachDtoToCoach(coachDTO);
+
         return repository.save(coach);
     }
 

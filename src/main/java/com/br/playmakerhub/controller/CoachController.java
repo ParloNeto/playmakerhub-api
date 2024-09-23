@@ -1,5 +1,6 @@
 package com.br.playmakerhub.controller;
 
+import com.br.playmakerhub.dto.CoachDTO;
 import com.br.playmakerhub.models.Coach;
 import com.br.playmakerhub.services.CoachService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,9 +45,7 @@ public class CoachController {
             }
     )
     public ResponseEntity<Coach> getCoachById(@PathVariable String coachId) {
-        logger.info("getCoachById() is called.");
         Coach coach = service.getCoachById(coachId);
-        logger.info("getCoachById() is finished.");
         return ResponseEntity.ok().body(coach);
     }
 
@@ -69,9 +68,7 @@ public class CoachController {
             }
     )
     public ResponseEntity<List<Coach>> getAllCoaches() {
-        logger.info("getAllCoaches() is called.");
         List<Coach> coachs = service.getAllCoaches();
-        logger.info("getAllCoaches() is finished.");
         return ResponseEntity.ok().body(coachs);
     }
 
@@ -89,8 +86,8 @@ public class CoachController {
                     @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             })
-    public ResponseEntity<Coach> createCoach(@RequestBody Coach coach) {
-        Coach coachCreated = service.createCoach(coach);
+    public ResponseEntity<Coach> createCoach(@RequestBody CoachDTO coachDTO) {
+        Coach coachCreated = service.createCoach(coachDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(coachCreated);
     }
 
@@ -107,9 +104,7 @@ public class CoachController {
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             })
     public ResponseEntity<Void> deleteCoach(@PathVariable String id) {
-        logger.info("deleteCoach() is called.");
         service.deleteCoach(id);
-        logger.info("deleteCoach() is finished.");
         return ResponseEntity.noContent().build();
     }
 }

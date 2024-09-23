@@ -1,24 +1,21 @@
-package com.br.playmakerhub.models;
+package com.br.playmakerhub.dto;
 
+import com.br.playmakerhub.models.CareerHistory;
+import com.br.playmakerhub.models.Coach;
+import com.br.playmakerhub.models.Player;
+import com.br.playmakerhub.models.Season;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
+
 @Data
-@Document(collection = "careers")
-public class Career {
+public class CareerDTO {
 
-    @Id
-    private String id;
-
-    @DBRef
-    private Coach coach;
+    private CoachDTO coach;
     private String fifaCareer;
     private String leagueCareer;
     private String teamCareer;
-    private List<Season> seasons;
-    private List<Player> players;
-    private CareerHistory careerHistory;
 }

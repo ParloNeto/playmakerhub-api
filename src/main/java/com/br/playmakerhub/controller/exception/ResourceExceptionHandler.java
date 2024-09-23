@@ -1,9 +1,11 @@
 package com.br.playmakerhub.controller.exception;
 
-import com.br.playmakerhub.exceptions.MissingFieldException;
-import com.br.playmakerhub.exceptions.ObjectNotFoundException;
-import com.br.playmakerhub.exceptions.PlayerIsNullException;
-import com.br.playmakerhub.exceptions.SeasonAlreadyExistsException;
+import com.br.playmakerhub.exceptions.*;
+import com.br.playmakerhub.exceptions.coach.CoachNotFoundException;
+import com.br.playmakerhub.exceptions.league.LeagueNotFoundException;
+import com.br.playmakerhub.exceptions.player.PlayerNotFoundException;
+import com.br.playmakerhub.exceptions.season.SeasonAlreadyExistsException;
+import com.br.playmakerhub.exceptions.season.SeasonNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +15,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class ResourceExceptionHandler {
 
-    @ExceptionHandler(PlayerIsNullException.class)
-    public ResponseEntity<StandardError> playerIsNull(PlayerIsNullException e, HttpServletRequest request) {
-        HttpStatus status = HttpStatus.NO_CONTENT;
+    @ExceptionHandler(PlayerNotFoundException.class)
+    public ResponseEntity<StandardError> playerNotFound(PlayerNotFoundException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        StandardError err = new StandardError(status.value(), e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(CoachNotFoundException.class)
+    public ResponseEntity<StandardError> coachNotFound(CoachNotFoundException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
         StandardError err = new StandardError(status.value(), e.getMessage(), request.getRequestURI());
         return ResponseEntity.status(status).body(err);
     }
@@ -28,9 +37,18 @@ public class ResourceExceptionHandler {
         return ResponseEntity.status(status).body(err);
     }
 
+
     @ExceptionHandler(ObjectNotFoundException.class)
     public ResponseEntity<StandardError> objectNotFound(ObjectNotFoundException e, HttpServletRequest request) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        StandardError err = new StandardError(status.value(), e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(SeasonNotFoundException.class)
+    public ResponseEntity<StandardError> seasonNotFound(SeasonNotFoundException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
         StandardError err = new StandardError(status.value(), e.getMessage(),
                 request.getRequestURI());
         return ResponseEntity.status(status).body(err);

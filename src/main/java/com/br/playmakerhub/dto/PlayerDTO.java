@@ -1,19 +1,15 @@
-package com.br.playmakerhub.models;
+package com.br.playmakerhub.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.br.playmakerhub.models.Statistics;
+import com.br.playmakerhub.models.StatisticsHistory;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
 @Data
-@Document(collection = "players")
-public class Player {
-
-    @Id
-    private String id;
+public class PlayerDTO {
 
     private String firstName;
 
@@ -29,9 +25,8 @@ public class Player {
 
     private String urlImagePlayer;
 
+    private String idCareer;
+
     private List<Statistics> statisticsBySeasons;
 
-    private StatisticsHistory statisticsHistory;
-
-    private String idCareer;
 }
