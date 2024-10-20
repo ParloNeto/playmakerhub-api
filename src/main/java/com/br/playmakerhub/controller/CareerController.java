@@ -2,6 +2,7 @@ package com.br.playmakerhub.controller;
 
 import com.br.playmakerhub.dto.CareerDTO;
 import com.br.playmakerhub.dto.PlayerDTO;
+import com.br.playmakerhub.dto.PlayerStatsDTO;
 import com.br.playmakerhub.dto.SeasonDTO;
 import com.br.playmakerhub.models.Career;
 import com.br.playmakerhub.models.Player;
@@ -16,6 +17,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -99,6 +102,52 @@ public class CareerController {
         return ResponseEntity.status(HttpStatus.OK).body(playersListFiltered);
     }
 
+    @GetMapping("/{careerId}/statistics/goals")
+    @Operation(summary = "Find all Players sorted by goals in career", description = "Find all Players by Season of Career",
+            tags = {"Career"},
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200",
+                            content = {
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Player.class))
+                                    )
+                            }),
+                    @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
+                    @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
+                    @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
+                    @ApiResponse(description = "Not Found", responseCode = "404", content = @Content),
+                    @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
+            }
+    )
+    public ResponseEntity<Page<PlayerStatsDTO>> getAllPlayersSortedByGoals(@PathVariable String careerId, Pageable pageable) {
+        Page<PlayerStatsDTO> playersListFiltered = service.getStatisticsPlayersCareerByGoals(careerId, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(playersListFiltered);
+    }
+
+    @GetMapping("/{careerId}/statistics/assists")
+    @Operation(summary = "Find all Players sorted by assists in career", description = "Find all Players by Season of Career",
+            tags = {"Career"},
+            responses = {
+                    @ApiResponse(description = "Success", responseCode = "200",
+                            content = {
+                                    @Content(
+                                            mediaType = "application/json",
+                                            array = @ArraySchema(schema = @Schema(implementation = Player.class))
+                                    )
+                            }),
+                    @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
+                    @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
+                    @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
+                    @ApiResponse(description = "Not Found", responseCode = "404", content = @Content),
+                    @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
+            }
+    )
+    public ResponseEntity<Page<PlayerStatsDTO>> getAllPlayersSortedByAssists(@PathVariable String careerId, Pageable pageable) {
+        Page<PlayerStatsDTO> playersListFiltered = service.getStatisticsPlayersCareerByAssists(careerId, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(playersListFiltered);
+    }
+
     @GetMapping
     @Operation(summary = "Find all Careers", description = "Find all Careers",
             tags = {"Career"},
@@ -149,6 +198,8 @@ public class CareerController {
         return ResponseEntity.status(HttpStatus.CREATED).body(careerAtuc);
     }
 
+
+
     @GetMapping("/{careerId}/seasons")
     public ResponseEntity<List<Season>> getSeasonsByCareer(@PathVariable String careerId) {
         List<Season> seasonList = service.getSeasonsByCareer(careerId);
@@ -165,6 +216,18 @@ public class CareerController {
     public ResponseEntity<List<Player>> getPlayerOfCareer(@PathVariable String careerId) {
         List<Player> playersList = service.getPlayersOfCareer(careerId);
         return ResponseEntity.status(HttpStatus.CREATED).body(playersList);
+    }
+
+    @GetMapping("/{careerId}/{seasonName}/available")
+    public ResponseEntity<List<Player>> availablePlayersForSeason(@PathVariable String careerId, @PathVariable String seasonName) {
+        List<Player> availablePlayersForSeason = service.getAvailablePlayersForSeason(careerId, seasonName);
+        return ResponseEntity.status(HttpStatus.OK).body(availablePlayersForSeason);
+    }
+
+    @PutMapping("/{careerId}/{playerId}")
+    public ResponseEntity<Career> updatePlayerToSpecificSeason(@PathVariable String careerId, @PathVariable String playerId, @RequestBody Season season) {
+        Career careerAtuc = service.updatePlayerToSeason(careerId, playerId, season);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @DeleteMapping("/{id}")

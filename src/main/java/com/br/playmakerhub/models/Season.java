@@ -21,3 +21,4 @@ public class Season {
     private List<Title> titles;
     private List<Player> players;
 }
+

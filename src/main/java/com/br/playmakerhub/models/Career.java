@@ -19,6 +19,7 @@ public class Career {
     private String leagueCareer;
     private String teamCareer;
     private List<Season> seasons;
+    @DBRef
     private List<Player> players;
     private CareerHistory careerHistory;
 }

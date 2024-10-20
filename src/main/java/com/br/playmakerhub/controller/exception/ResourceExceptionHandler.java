@@ -4,6 +4,8 @@ import com.br.playmakerhub.exceptions.*;
 import com.br.playmakerhub.exceptions.coach.CoachNotFoundException;
 import com.br.playmakerhub.exceptions.league.LeagueNotFoundException;
 import com.br.playmakerhub.exceptions.player.PlayerNotFoundException;
+import com.br.playmakerhub.exceptions.season.InvalidSeasonTypeException;
+import com.br.playmakerhub.exceptions.season.PreviousSeasonException;
 import com.br.playmakerhub.exceptions.season.SeasonAlreadyExistsException;
 import com.br.playmakerhub.exceptions.season.SeasonNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,6 +59,22 @@ public class ResourceExceptionHandler {
     @ExceptionHandler(SeasonAlreadyExistsException.class)
     public ResponseEntity<StandardError> seasonAlreadyExists(SeasonAlreadyExistsException e, HttpServletRequest request) {
         HttpStatus status = HttpStatus.CONFLICT;
+        StandardError err = new StandardError(status.value(), e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(PreviousSeasonException.class)
+    public ResponseEntity<StandardError> previousSeason(PreviousSeasonException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        StandardError err = new StandardError(status.value(), e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
+    @ExceptionHandler(InvalidSeasonTypeException.class)
+    public ResponseEntity<StandardError> invalidSeason(InvalidSeasonTypeException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
         StandardError err = new StandardError(status.value(), e.getMessage(),
                 request.getRequestURI());
         return ResponseEntity.status(status).body(err);

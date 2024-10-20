@@ -1,6 +1,7 @@
 package com.br.playmakerhub.services;
 
 import com.br.playmakerhub.dto.PlayerDTO;
+import com.br.playmakerhub.dto.PlayerStatsDTO;
 import com.br.playmakerhub.exceptions.MissingFieldException;
 import com.br.playmakerhub.exceptions.ObjectNotFoundException;
 import com.br.playmakerhub.exceptions.player.PlayerNotFoundException;
@@ -18,6 +19,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class PlayerService {

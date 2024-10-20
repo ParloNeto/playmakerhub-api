@@ -1,6 +1,7 @@
 package com.br.playmakerhub.mapper;
 
 import com.br.playmakerhub.dto.PlayerDTO;
+import com.br.playmakerhub.dto.PlayerStatsDTO;
 import com.br.playmakerhub.models.Player;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
@@ -21,7 +22,15 @@ public interface PlayerMapper {
 
     Player playerDtoToPlayer(PlayerDTO playerDTO);
 
+    @Mapping(target = "goals", source = "statisticsHistory.goals")
+    @Mapping(target = "assists", source = "statisticsHistory.assists")
+    PlayerStatsDTO playerToPlayerStatsDTO(Player player);
+
+
     List<PlayerDTO> convertListPlayerToListDTO(Iterable<Player> players);
+
+
+    List<PlayerStatsDTO> convertListPlayerToListStatsDTO(Iterable<Player> players);
 
     @AfterMapping
     default void handleNullList(@MappingTarget List<PlayerDTO> listPlayer) {
