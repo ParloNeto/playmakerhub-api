@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,7 +80,7 @@ public class CareerController {
         return ResponseEntity.status(HttpStatus.OK).body(playersList);
     }
 
-    @GetMapping("/{careerId}/{typeSeason}/{positionPlayer}")
+    @GetMapping("/{careerId}/seasons/{typeSeason}/players/positions/{positionPlayer}")
     @Operation(summary = "Find all Players by Season of Career", description = "Find all Players by Season of Career",
             tags = {"Career"},
             responses = {
@@ -97,8 +98,8 @@ public class CareerController {
                     @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
             }
     )
-    public ResponseEntity<List<Player>> getAllPlayersBySeasonAndCareerFilteredByPosition(@PathVariable String careerId, @PathVariable String typeSeason, @PathVariable String positionPlayer) {
-        List<Player> playersListFiltered = service.getAllPlayersBySeasonAndCareerByPosition(careerId, typeSeason, positionPlayer);
+    public ResponseEntity<List<Player>> getPlayersBySeasonAndPosition(@PathVariable String careerId, @PathVariable String typeSeason, @PathVariable String positionPlayer) {
+        List<Player> playersListFiltered = service.getPlayersBySeasonAndPosition(careerId, typeSeason, positionPlayer);
         return ResponseEntity.status(HttpStatus.OK).body(playersListFiltered);
     }
 
@@ -193,6 +194,13 @@ public class CareerController {
     }
 
     @PostMapping("/{careerId}/{typeSeason}")
+    @Operation(summary = "Add a player to a career",
+            description = "Adds a player to the specified career for a given season type.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Player added to career successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "404", description = "Career not found")
+    })
     public ResponseEntity<Career> createPlayerToCareer(@RequestBody PlayerDTO playerDto, @PathVariable String typeSeason, @PathVariable String careerId) {
         Career careerAtuc = service.addPlayerToCareer(careerId, playerDto, typeSeason);
         return ResponseEntity.status(HttpStatus.CREATED).body(careerAtuc);
@@ -201,32 +209,76 @@ public class CareerController {
 
 
     @GetMapping("/{careerId}/seasons")
+    @Operation(summary = "Get seasons by career",
+            description = "Retrieves the list of seasons associated with a specific career.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Seasons retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Career not found")
+    })
     public ResponseEntity<List<Season>> getSeasonsByCareer(@PathVariable String careerId) {
         List<Season> seasonList = service.getSeasonsByCareer(careerId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(seasonList);
+        return ResponseEntity.status(HttpStatus.OK).body(seasonList);
+    }
+
+    @GetMapping("/{careerId}/seasons/{typeSeason}")
+    @Operation(summary = "Get specific seasons by career",
+            description = "Retrieves the specific season associated with a specific career.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Seasons retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Career not found")
+    })
+    public ResponseEntity<Season> getSeasonByCareer(@PathVariable String careerId, @PathVariable String typeSeason) {
+        Season season = service.getSeasonByCareer(careerId, typeSeason);
+        return ResponseEntity.status(HttpStatus.OK).body(season);
     }
 
     @PostMapping("/{careerId}/seasons")
+    @Operation(summary = "Add a season to a career",
+            description = "Adds a new season to the specified career.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Season added to career successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid season data"),
+            @ApiResponse(responseCode = "404", description = "Career not found")
+    })
     public ResponseEntity<Career> addSeasonToCareer(@RequestBody SeasonDTO seasonDTO, @PathVariable String careerId) {
         Career careerAtuc = service.addSeasonToCareer(careerId, seasonDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(careerAtuc);
     }
 
     @GetMapping("/{careerId}/players")
+    @Operation(summary = "Get players of a career",
+            description = "Retrieves the list of players associated with a specific career.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Players retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Career not found")
+    })
     public ResponseEntity<List<Player>> getPlayerOfCareer(@PathVariable String careerId) {
         List<Player> playersList = service.getPlayersOfCareer(careerId);
         return ResponseEntity.status(HttpStatus.CREATED).body(playersList);
     }
 
     @GetMapping("/{careerId}/{seasonName}/available")
+    @Operation(summary = "Get available players for a season",
+            description = "Retrieves a list of available players for a specific season in a career.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Available players retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Career or season not found")
+    })
     public ResponseEntity<List<Player>> availablePlayersForSeason(@PathVariable String careerId, @PathVariable String seasonName) {
         List<Player> availablePlayersForSeason = service.getAvailablePlayersForSeason(careerId, seasonName);
         return ResponseEntity.status(HttpStatus.OK).body(availablePlayersForSeason);
     }
 
     @PutMapping("/{careerId}/{playerId}")
+    @Operation(summary = "Update a player for a specific season",
+            description = "Updates a player's association with a specific season in a career.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Player updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Career or player not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid season data")
+    })
     public ResponseEntity<Career> updatePlayerToSpecificSeason(@PathVariable String careerId, @PathVariable String playerId, @RequestBody Season season) {
-        Career careerAtuc = service.updatePlayerToSeason(careerId, playerId, season);
+        service.updatePlayerToSeason(careerId, playerId, season);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 

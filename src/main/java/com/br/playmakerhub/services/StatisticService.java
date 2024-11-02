@@ -2,9 +2,7 @@ package com.br.playmakerhub.services;
 
 import com.br.playmakerhub.dto.PlayerStatsDTO;
 import com.br.playmakerhub.mapper.PlayerMapper;
-import com.br.playmakerhub.models.Player;
-import com.br.playmakerhub.models.Statistics;
-import com.br.playmakerhub.models.StatisticsHistory;
+import com.br.playmakerhub.models.*;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +44,24 @@ public class StatisticService {
 
             return Integer.compare(assistsB, assistsA);
         }).collect(Collectors.toList());
+    }
+
+    public CareerHistory calculateCareerHistory(List<Season> seasons, CareerHistory careerHistory) {
+        int totalGames = seasons.stream().mapToInt(Season::getGames).sum();
+        int totalWins = seasons.stream().mapToInt(Season::getWins).sum();
+        int totalDraws = seasons.stream().mapToInt(Season::getDraws).sum();
+        int totalLosses = seasons.stream().mapToInt(Season::getLosses).sum();
+        int totalGoalsConceded = seasons.stream().mapToInt(Season::getGoalsConceded).sum();
+        int totalGoalsScored = seasons.stream().mapToInt(Season::getGoalsScored).sum();
+
+        careerHistory.setGames(totalGames);
+        careerHistory.setWins(totalWins);
+        careerHistory.setDraws(totalDraws);
+        careerHistory.setLosses(totalLosses);
+        careerHistory.setGoalsConceded(totalGoalsConceded);
+        careerHistory.setGoalsScored(totalGoalsScored);
+
+        return careerHistory;
     }
 
 //    public List<StatisticsHistory> somaStatisticsToStatisticsHistory(List<Statistics> statistics) {

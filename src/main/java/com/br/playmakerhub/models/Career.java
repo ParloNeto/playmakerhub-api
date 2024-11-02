@@ -18,6 +18,7 @@ public class Career {
     private String fifaCareer;
     private String leagueCareer;
     private String teamCareer;
+    @DBRef
     private List<Season> seasons;
     @DBRef
     private List<Player> players;

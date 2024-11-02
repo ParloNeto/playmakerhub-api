@@ -1,10 +1,8 @@
 package com.br.playmakerhub.controller;
 
-import com.br.playmakerhub.models.Player;
 import com.br.playmakerhub.models.response.SeasonResponse;
 import com.br.playmakerhub.services.FIFAService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

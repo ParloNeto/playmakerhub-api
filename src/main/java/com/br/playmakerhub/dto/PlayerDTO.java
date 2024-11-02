@@ -29,4 +29,8 @@ public class PlayerDTO {
 
     private List<Statistics> statisticsBySeasons;
 
+    private StatisticsHistory statisticsHistory;
+
+
+
 }

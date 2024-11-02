@@ -1,13 +1,10 @@
 package com.br.playmakerhub.controller.exception;
 
 import com.br.playmakerhub.exceptions.*;
+import com.br.playmakerhub.exceptions.career.CareerNotFoundException;
 import com.br.playmakerhub.exceptions.coach.CoachNotFoundException;
-import com.br.playmakerhub.exceptions.league.LeagueNotFoundException;
 import com.br.playmakerhub.exceptions.player.PlayerNotFoundException;
-import com.br.playmakerhub.exceptions.season.InvalidSeasonTypeException;
-import com.br.playmakerhub.exceptions.season.PreviousSeasonException;
-import com.br.playmakerhub.exceptions.season.SeasonAlreadyExistsException;
-import com.br.playmakerhub.exceptions.season.SeasonNotFoundException;
+import com.br.playmakerhub.exceptions.season.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +53,14 @@ public class ResourceExceptionHandler {
         return ResponseEntity.status(status).body(err);
     }
 
+    @ExceptionHandler(CareerNotFoundException.class)
+    public ResponseEntity<StandardError> careerNotFound(CareerNotFoundException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.NOT_FOUND;
+        StandardError err = new StandardError(status.value(), e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+
     @ExceptionHandler(SeasonAlreadyExistsException.class)
     public ResponseEntity<StandardError> seasonAlreadyExists(SeasonAlreadyExistsException e, HttpServletRequest request) {
         HttpStatus status = HttpStatus.CONFLICT;
@@ -74,6 +79,20 @@ public class ResourceExceptionHandler {
 
     @ExceptionHandler(InvalidSeasonTypeException.class)
     public ResponseEntity<StandardError> invalidSeason(InvalidSeasonTypeException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        StandardError err = new StandardError(status.value(), e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+    @ExceptionHandler(DuplicateSeasonException.class)
+    public ResponseEntity<StandardError> duplicateSeason(DuplicateSeasonException e, HttpServletRequest request) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        StandardError err = new StandardError(status.value(), e.getMessage(),
+                request.getRequestURI());
+        return ResponseEntity.status(status).body(err);
+    }
+    @ExceptionHandler(DuplicateStatisticsException.class)
+    public ResponseEntity<StandardError> duplicateStatistics(DuplicateStatisticsException e, HttpServletRequest request) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
         StandardError err = new StandardError(status.value(), e.getMessage(),
                 request.getRequestURI());

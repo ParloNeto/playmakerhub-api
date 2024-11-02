@@ -1,17 +1,13 @@
 package com.br.playmakerhub.controller;
 
 import com.br.playmakerhub.models.League;
-import com.br.playmakerhub.models.Player;
 import com.br.playmakerhub.models.Team;
-import com.br.playmakerhub.services.LeagueService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

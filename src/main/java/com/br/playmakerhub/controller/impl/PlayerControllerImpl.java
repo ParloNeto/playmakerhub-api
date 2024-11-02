@@ -2,8 +2,11 @@ package com.br.playmakerhub.controller.impl;
 
 import com.br.playmakerhub.controller.IPlayerController;
 import com.br.playmakerhub.dto.PlayerDTO;
+import com.br.playmakerhub.dto.SeasonDTO;
 import com.br.playmakerhub.mapper.PlayerMapper;
 import com.br.playmakerhub.models.Player;
+import com.br.playmakerhub.models.Statistics;
+import com.br.playmakerhub.models.enums.TypeSeason;
 import com.br.playmakerhub.services.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +32,35 @@ public class PlayerControllerImpl implements IPlayerController {
     }
 
     @Override
+    public ResponseEntity<Statistics> findPlayerStatisticsBySeason(String id, String seasonName) {
+        Statistics statistics = service.findPlayerStatisticsBySeason(id, seasonName);
+        return ResponseEntity.ok().body(statistics);
+    }
+
+    @Override
     public ResponseEntity<List<Player>> getAllPlayers() {
         List<Player> players = service.getAllPlayers();
         return ResponseEntity.ok().body(players);
+    }
+
+    @Override
+    public ResponseEntity<Void> createStatisticsSeasonPlayer(String id, Statistics statistics) {
+        service.createStatisticsSeasonPlayer(id, statistics);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(id)
+                .toUri();
+        return ResponseEntity.created(location).build();
+    }
+
+    @Override
+    public ResponseEntity<List<Statistics>> updateStatisticsSeasonPlayer(String id, Statistics statistics) {
+        List<Statistics> statisticsList = service.updateStatisticsSeasonPlayer(id, statistics);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(id)
+                .toUri();
+        return ResponseEntity.ok().body(statisticsList);
     }
 
 

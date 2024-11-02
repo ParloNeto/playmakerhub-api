@@ -2,20 +2,28 @@ package com.br.playmakerhub.services;
 
 import com.br.playmakerhub.dto.PlayerDTO;
 import com.br.playmakerhub.dto.PlayerStatsDTO;
+import com.br.playmakerhub.dto.SeasonDTO;
 import com.br.playmakerhub.exceptions.MissingFieldException;
 import com.br.playmakerhub.exceptions.ObjectNotFoundException;
 import com.br.playmakerhub.exceptions.player.PlayerNotFoundException;
+import com.br.playmakerhub.exceptions.season.DuplicateSeasonException;
+import com.br.playmakerhub.exceptions.season.DuplicateStatisticsException;
+import com.br.playmakerhub.exceptions.season.SeasonNotFoundException;
 import com.br.playmakerhub.mapper.PlayerMapper;
 import com.br.playmakerhub.models.Player;
+import com.br.playmakerhub.models.Season;
 import com.br.playmakerhub.models.Statistics;
 import com.br.playmakerhub.models.StatisticsHistory;
+import com.br.playmakerhub.models.enums.TypeSeason;
 import com.br.playmakerhub.repositories.PlayerRepository;
+import com.br.playmakerhub.repositories.SeasonRepository;
 import io.micrometer.common.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +39,9 @@ public class PlayerService {
     @Autowired
     private PlayerRepository repository;
 
+    @Autowired
+    private SeasonRepository seasonRepository;
+
     public List<Player> getAllPlayers() {
         logger.info("getPlayerById() is called");
         return repository.findAll();
@@ -38,9 +49,74 @@ public class PlayerService {
 
     public Player getPlayerById(String id) {
         logger.info("getPlayerById() is called");
-        Player entity = repository.findById(id).orElseThrow(() -> new ObjectNotFoundException("No player found with this ID"));
+        Player player = repository.findById(id).orElseThrow(() -> new PlayerNotFoundException("Nenhum jogador foi encontrado com esse ID"));
         logger.info("getPlayerById() is finished");
-        return entity;
+        return player;
+    }
+
+    public Statistics findPlayerStatisticsBySeason(String playerId, String seasonName) {
+        logger.info("findPlayerStatisticsBySeason() is called");
+
+        Player entity = getPlayerById(playerId);
+
+        Statistics statisticsSeasonFiltered = entity.getStatisticsBySeasons().stream()
+                .filter(season -> {
+                    if (season.getSeason() == null) {
+                        throw new IllegalArgumentException("O nome da temporada não pode ser nulo");
+                    }
+
+
+                    return season.getSeason().equalsIgnoreCase(seasonName);
+                })
+                .findFirst().orElseThrow(() -> new SeasonNotFoundException("Temporada não encontrada"));
+        logger.info("findPlayerStatisticsBySeason() is finished");
+        return statisticsSeasonFiltered;
+    }
+    public void createStatisticsSeasonPlayer(String id, Statistics statistics) {
+        logger.info("createStatisticsSeasonPlayer() is called");
+        Player player = getPlayerById(id);
+
+        boolean seasonExists = player.getStatisticsBySeasons().stream()
+                .anyMatch(season -> season.getSeason().equalsIgnoreCase(statistics.getSeason()));
+
+        if (seasonExists) throw new DuplicateStatisticsException();
+
+        player.getStatisticsBySeasons().add(statistics);
+        player.setStatisticsHistory(createStatisticsHistory(player.getStatisticsBySeasons()));
+
+        repository.save(player);
+        logger.info("createStatisticsSeasonPlayer() is finished");
+
+    }
+
+    public List<Statistics> updateStatisticsSeasonPlayer(String id, Statistics statistics) {
+        logger.info("createStatisticsSeasonPlayer() is called");
+        Player player = getPlayerById(id);
+
+        boolean seasonExists = player.getStatisticsBySeasons().stream()
+                .anyMatch(season -> season.getSeason().equalsIgnoreCase(statistics.getSeason()));
+
+        if (seasonExists) {
+           var seasonActual = player.getStatisticsBySeasons().stream()
+                    .filter(season -> season.getSeason().equalsIgnoreCase(statistics.getSeason()))
+                    .findFirst().orElseThrow(SeasonNotFoundException::new);
+
+            seasonActual.setMatches(statistics.getMatches());
+            seasonActual.setGoals(statistics.getGoals());
+            seasonActual.setAssists(statistics.getAssists());
+            seasonActual.setYellowCards(statistics.getYellowCards());
+            seasonActual.setRedCards(statistics.getRedCards());
+
+            player.getStatisticsBySeasons().add(seasonActual);
+            player.setStatisticsHistory(createStatisticsHistory(player.getStatisticsBySeasons()));
+        } else {
+            throw new SeasonNotFoundException();
+        }
+
+        repository.save(player);
+        logger.info("createStatisticsSeasonPlayer() is finished");
+        return player.getStatisticsBySeasons();
+
     }
 
     public Player createPlayer(PlayerDTO playerDto) {
@@ -48,7 +124,10 @@ public class PlayerService {
         validatePlayer(playerDto);
 
         Player player = PlayerMapper.INSTANCE.playerDtoToPlayer(playerDto);
-        player.setStatisticsHistory(createStatisticsHistory(player.getStatisticsBySeasons()));
+
+        if (player.getStatisticsHistory() == null) {
+            player.setStatisticsHistory(createStatisticsHistory(player.getStatisticsBySeasons()));
+        }
 
         logger.info("createPlayer() is finished");
         return repository.save(player);
@@ -102,16 +181,18 @@ public class PlayerService {
                 throw new PlayerNotFoundException("Player cannot be null");
             }
 
+            if (player.getStatisticsBySeasons() == null) player.setStatisticsBySeasons(new ArrayList<>());
+
             for (Field field : PlayerDTO.class.getDeclaredFields()) {
                 field.setAccessible(true);
 
                 String fieldName = field.getName();
                 String fieldLabel = FIELD_LABELS.getOrDefault(fieldName, fieldName); // Obtém o rótulo ou o nome do campo original
 
-                if (field.get(player) == null) {
-                    logger.error("Field '" + fieldLabel + "' is empty");
-                    throw new MissingFieldException("Campo '" + fieldLabel + "' está faltando.");
-                }
+//                if (field.get(player) == null) {
+//                    logger.error("Field '" + fieldLabel + "' is empty");
+//                    throw new MissingFieldException("Campo '" + fieldLabel + "' está faltando.");
+//                }
 
                 if (field.get(player) instanceof String) {
                     String value = (String) field.get(player);
@@ -127,8 +208,8 @@ public class PlayerService {
     }
 
     private StatisticsHistory createStatisticsHistory(List<Statistics> statisticsBySeasons) {
-        if (statisticsBySeasons == null || statisticsBySeasons.isEmpty()) {
-            throw new ObjectNotFoundException("List of Statistics is null or empty");
+        if (statisticsBySeasons == null) {
+            throw new ObjectNotFoundException("List of Statistics is null");
         }
 
         StatisticsHistory statisticsHistory = new StatisticsHistory();

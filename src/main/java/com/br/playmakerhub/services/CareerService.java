@@ -5,16 +5,19 @@ import com.br.playmakerhub.dto.PlayerDTO;
 import com.br.playmakerhub.dto.PlayerStatsDTO;
 import com.br.playmakerhub.dto.SeasonDTO;
 import com.br.playmakerhub.exceptions.ObjectNotFoundException;
+import com.br.playmakerhub.exceptions.career.CareerNotFoundException;
 import com.br.playmakerhub.exceptions.player.PlayerNotFoundException;
 import com.br.playmakerhub.exceptions.season.InvalidSeasonTypeException;
 import com.br.playmakerhub.exceptions.season.PreviousSeasonException;
 import com.br.playmakerhub.exceptions.season.SeasonAlreadyExistsException;
 import com.br.playmakerhub.exceptions.season.SeasonNotFoundException;
 import com.br.playmakerhub.mapper.CareerMapper;
+import com.br.playmakerhub.mapper.PlayerMapper;
 import com.br.playmakerhub.models.*;
 import com.br.playmakerhub.models.enums.TypeSeason;
 import com.br.playmakerhub.repositories.CareerRepository;
 import com.br.playmakerhub.repositories.PlayerRepository;
+import com.br.playmakerhub.repositories.SeasonRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class CareerService {
@@ -34,6 +38,9 @@ public class CareerService {
 
     @Autowired
     private CareerRepository repository;
+
+    @Autowired
+    private SeasonRepository seasonRepository;
 
     @Autowired
     private PlayerRepository playerRepository;
@@ -61,38 +68,36 @@ public class CareerService {
 
     public Career getCareerById(String id) {
         Optional<Career> career = repository.findById(id);
-        return career.orElse(null);
+        return career.orElseThrow(CareerNotFoundException::new);
+    }
+
+    public Page<PlayerStatsDTO> getStatisticsPlayersCareer(String id, Pageable pageable, Comparator<? super PlayerStatsDTO> comparator) {
+        Career career = getCareerById(id);
+
+        if (career.getPlayers() == null) {
+            throw new PlayerNotFoundException("Não foi possível encontrar jogadores associados a essa carreira");
+        }
+
+        List<PlayerStatsDTO> playerStatsDTOList = PlayerMapper.INSTANCE.convertListPlayerToListStatsDTO(career.getPlayers());
+
+        List<PlayerStatsDTO> sortedList = playerStatsDTOList.stream()
+                .sorted(comparator)
+                .collect(Collectors.toList());
+
+        return getPageFromList(sortedList, pageable);
     }
 
     public Page<PlayerStatsDTO> getStatisticsPlayersCareerByGoals(String id, Pageable pageable) {
-        Career career = repository.findById(id).orElseThrow(() -> new SeasonNotFoundException("Carreira nao encontrada"));;
-
-        if (career.getPlayers().isEmpty()) {
-            return null;
-        }
-
-        List<PlayerStatsDTO> sortedList = statisticService.sortPlayerByGoals(career.getPlayers());
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), sortedList.size());
-        List<PlayerStatsDTO> subList = sortedList.subList(start, end);
-
-        return new PageImpl<>(subList, pageable, sortedList.size());
+        return getStatisticsPlayersCareer(id, pageable, Comparator.comparing(PlayerStatsDTO::getGoals).reversed());
     }
 
     public Page<PlayerStatsDTO> getStatisticsPlayersCareerByAssists(String id, Pageable pageable) {
-        Career career = repository.findById(id).orElseThrow(() -> new SeasonNotFoundException("Carreira nao encontrada"));;
-
-        if (career.getPlayers().isEmpty()) {
-            return null;
-        }
-
-        List<PlayerStatsDTO> sortedList = statisticService.sortPlayerByAssists(career.getPlayers());
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), sortedList.size());
-        List<PlayerStatsDTO> subList = sortedList.subList(start, end);
-
-        return new PageImpl<>(subList, pageable, sortedList.size());
+        return getStatisticsPlayersCareer(id, pageable, Comparator.comparing(PlayerStatsDTO::getAssists).reversed());
     }
+
+
+
+
     public Career createCareer(CareerDTO careerDTO) {
         if (careerDTO == null) {
             throw new IllegalArgumentException("Career cannot be null");
@@ -101,6 +106,7 @@ public class CareerService {
         Coach coach = coachService.createCoach(careerDTO.getCoach());
 
         Career career = CareerMapper.INSTANCE.careerDtoToCareer(careerDTO);
+        career.setCareerHistory(new CareerHistory(0,0,0,0,0,0,null));
 
         String season = fifaService.getInitialSeasonByFIFAVersion(career.getFifaCareer());
         SeasonDTO initialSeasonDTO = new SeasonDTO();
@@ -118,83 +124,27 @@ public class CareerService {
     }
 
     public Career addPlayerToCareer(String careerId, PlayerDTO playerDTO, String typeSeason) {
-        Optional<Career> careerOpt = repository.findById(careerId);
+        Career career = getCareerById(careerId);
 
-        if (careerOpt.isPresent()) {
-            Career career = careerOpt.get();
-            Optional<List<Player>> playersCareer = Optional.ofNullable(career.getPlayers());
+        playerDTO.setIdCareer(careerId);
+        Player savedPlayer = playerService.createPlayer(playerDTO);
 
-            boolean playerAddedToSpecificSeason = false;
-
-            playerDTO.setIdCareer(careerOpt.get().getId());
-
-            if (typeSeason.equals("geral")) {
-
-                Player savedPlayer = playerService.createPlayer(playerDTO);
-
-                if (playersCareer.isEmpty()) {
-                    List<Player> players = new ArrayList<>();
-                    career.setPlayers(players);
-                }
-
-                if (playersCareer.isPresent()) {
-                    career.getPlayers().add(savedPlayer);
-                }
-
-            } else if (isValidSeason(typeSeason)) {
-                for (Season season : career.getSeasons()) {
-
-                    List<Player> players = new ArrayList<>();
-
-                    if (season.getPlayers() != null) {
-                        players = season.getPlayers();
-                    }
-
-                    if (playerDTO.getStatisticsBySeasons() == null) {
-                        List<Statistics> statistics = new ArrayList<Statistics>();
-                        playerDTO.setStatisticsBySeasons(statistics);
-                    }
-
-
-                    if (season.getSeasonName().equals(typeSeason)) {
-
-                        for (Statistics statistics : playerDTO.getStatisticsBySeasons()) {
-                            statistics.setSeason(typeSeason);
-                        }
-
-                        playerDTO.setIdCareer(careerOpt.get().getId());
-
-                        Player savedPlayer = playerService.createPlayer(playerDTO);
-
-                        players.add(savedPlayer);
-
-                        StatisticsHistory history = savedPlayer.getStatisticsHistory();
-
-                        if (history == null) {
-                            history = statisticService.convertStatisticsToStatisticsHistory(savedPlayer.getStatisticsBySeasons().getFirst());
-                        }
-
-                        savedPlayer.setStatisticsHistory(history);
-
-                        season.setPlayers(players);
-                        career.setPlayers(players);
-                        playerAddedToSpecificSeason = true;
-                        break;
-                    }
-                }
-            } else {
-                throw new InvalidSeasonTypeException(typeSeason);
-            }
-            return repository.save(career);
+        if ("geral".equalsIgnoreCase(typeSeason)) {
+            addPlayerToGeneralCareer(career, savedPlayer);
+        } else if (isValidSeason(typeSeason)) {
+            addPlayerToSpecificSeason(career, savedPlayer, typeSeason);
         } else {
-            throw new IllegalArgumentException("Career not found");
+            throw new InvalidSeasonTypeException(typeSeason);
         }
+
+        return repository.save(career);
     }
+
+
 
     public List<Player> getAvailablePlayersForSeason(String careerId, String seasonName) {
 
-        Career career = repository.findById(careerId)
-                .orElseThrow(() -> new SeasonNotFoundException("Carreira não encontrada."));
+        Career career = getCareerById(careerId);
 
         List<Player> allPlayers = career.getPlayers();
 
@@ -213,9 +163,11 @@ public class CareerService {
     }
 
 
+
+
     public Career updatePlayerToSeason(String careerId, String playerId, Season season) {
 
-        Career career = repository.findById(careerId).orElseThrow(() -> new SeasonNotFoundException("Carreira nao encontrada."));
+        Career career = getCareerById(careerId);
 
         Player player = playerRepository.findById(playerId).orElseThrow(PlayerNotFoundException::new);
 
@@ -229,59 +181,60 @@ public class CareerService {
         }
 
         seasonFiltered.getPlayers().add(player);
-
+        seasonRepository.save(seasonFiltered);
         return repository.save(career);
-
     }
 
     public Career addSeasonToCareer(String careerId, SeasonDTO seasonDTO) {
-        Career career = repository.findById(careerId).orElseThrow(() -> new SeasonNotFoundException("Carreira nao encontrada."));
-        String firstSeason = career.getSeasons().getFirst().getSeasonName();
+        Career career = getCareerById(careerId);
 
-        if (isPreviousSeason(firstSeason, seasonDTO.getSeasonName())) {
-            throw new PreviousSeasonException("A temporada selecionada não pode ser anterior à primeira temporada criada na carreira.");
+        validateNewSeason(career, seasonDTO.getSeasonName());
+
+        Season newSeason = seasonService.createSeason(seasonDTO);
+        if (career.getPlayers() != null) {
+            newSeason = seasonService.setPlayersToSeason(newSeason.getId(), career.getPlayers());
         }
 
-            for (Season sea : career.getSeasons()) {
-                if (Objects.equals(sea.getSeasonName(), seasonDTO.getSeasonName())) {
-                    throw new SeasonAlreadyExistsException("Ja existe essa temporada na carreira selecionada.");
-                }
+        career.getSeasons().add(newSeason);
 
-            }
-
-        Season seasonSaved = seasonService.createSeason(seasonDTO);
-
-            if (career.getPlayers() != null) {
-                seasonSaved = seasonService.setPlayersToSeason(seasonSaved.getId(), career.getPlayers());
-            }
-
-        List<Season> seasons = career.getSeasons();
-        seasons.add(seasonSaved);
+        CareerHistory updatedCareerHistory = updateCareerHistory(career.getSeasons(), career.getCareerHistory());
+        career.setCareerHistory(updatedCareerHistory);
 
         return repository.save(career);
     }
 
+
+
+
     public void deleteCareer(String id) {
-        Career career = repository.findById(id).orElseThrow(() -> new ObjectNotFoundException(
-                "No technician found with this ID"));
+        Career career = repository.findById(id).orElseThrow(() -> new CareerNotFoundException(
+                "Carreira não encontrada pelo ID"));
         repository.delete(career);
     }
 
     public List<Player> getPlayersOfCareer(String careerId) {
        Career career = getCareerById(careerId);
-        return new ArrayList<>(career.getPlayers());
+       if (career.getPlayers() == null)
+           throw new PlayerNotFoundException("Não foi possível encontrar jogadores associados a essa temporada.");
+
+       return new ArrayList<>(career.getPlayers());
     }
 
     public List<Player> getAllPlayersBySeasonAndCareer(String careerId, String typeSeason) {
-        Career careerOpt = repository.findById(careerId).orElseThrow(() -> new SeasonNotFoundException("Carreira nao encontrada"));
+        Career careerOpt = getCareerById(careerId);
 
-    return careerOpt.getSeasons().stream()
-            .filter(season -> typeSeason.equals(season.getSeasonName()))
-            .flatMap(season -> season.getPlayers().stream())
-            .collect(Collectors.toList());
+        return careerOpt.getSeasons().stream()
+                .filter(season -> typeSeason.equals(season.getSeasonName()))
+                .flatMap(season -> {
+                    if (season.getPlayers() == null)
+                        throw new PlayerNotFoundException("Não foi possível encontrar jogadores associados a essa temporada.");
+
+                    return season.getPlayers().stream();
+                })
+                .collect(Collectors.toList());
     }
 
-    public List<Player> getAllPlayersBySeasonAndCareerByPosition(String careerId, String typeSeason, String positionPlayer) {
+        public List<Player> getPlayersBySeasonAndPosition(String careerId, String typeSeason, String positionPlayer) {
         List<Player> playerList = getAllPlayersBySeasonAndCareer(careerId, typeSeason);
         List<Player> filteredPlayers = playerList.stream()
                 .filter(res -> positionPlayer.equals(res.getPosition()))
@@ -293,9 +246,58 @@ public class CareerService {
     }
 
     public List<Season> getSeasonsByCareer(String careerId) {
-        Career careerOpt = repository.findById(careerId).orElseThrow(() -> new SeasonNotFoundException("Carreira nao encontrada"));
-
+        Career careerOpt = getCareerById(careerId);
         return careerOpt.getSeasons();
+    }
+
+    public Season getSeasonByCareer(String careerId, String typeSeason) {
+        Career career = getCareerById(careerId);
+        return career.getSeasons().stream()
+                .filter((seasonInCareer) -> seasonInCareer.getSeasonName().equalsIgnoreCase(typeSeason))
+                .findFirst()
+                    .orElseThrow(SeasonNotFoundException::new);
+    }
+
+
+    public CareerHistory updateCareerHistory(List<Season> seasons, CareerHistory careerHistory) {
+        return statisticService.calculateCareerHistory(seasons, careerHistory);
+    }
+
+    public Career updateCareerHistoryByFirstSeason(String careerId) {
+        Career career = getCareerById(careerId);
+        CareerHistory careerHistory = career.getCareerHistory();
+
+        List<Season> seasons = career.getSeasons().stream()
+                .map(dbRefSeason -> seasonService.getSeasonById(dbRefSeason.getId()))
+                .toList();
+
+        CareerHistory careerHistorySum = updateCareerHistory(seasons, careerHistory);
+
+        career.setCareerHistory(careerHistorySum);
+        return repository.save(career);
+    }
+
+
+
+    private Page<PlayerStatsDTO> getPageFromList(List<PlayerStatsDTO> list, Pageable pageable) {
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), list.size());
+        List<PlayerStatsDTO> subList = list.subList(start, end);
+
+        return new PageImpl<>(subList, pageable, list.size());
+    }
+
+    private void validateNewSeason(Career career, String seasonName) {
+        String firstSeason = career.getSeasons().get(0).getSeasonName();
+        if (isPreviousSeason(firstSeason, seasonName)) {
+            throw new PreviousSeasonException("A temporada não pode ser anterior à primeira.");
+        }
+        career.getSeasons().stream()
+                .filter(season -> season.getSeasonName().equals(seasonName))
+                .findFirst()
+                .ifPresent(season -> {
+                    throw new SeasonAlreadyExistsException("Essa temporada já existe.");
+                });
     }
 
     private boolean isPreviousSeason(String temporada1, String temporada2) {
@@ -309,7 +311,29 @@ public class CareerService {
                 (anoInicialTemporada2 == anoInicialTemporada1 && anoFinalTemporada2 < anoFinalTemporada1);
     }
 
-    public boolean isValidSeason(String typeSeason) {
+    private void addPlayerToGeneralCareer(Career career, Player savedPlayer) {
+        if (career.getPlayers() == null) {
+            career.setPlayers(new ArrayList<>());
+        }
+        career.getPlayers().add(savedPlayer);
+    }
+
+    private void addPlayerToSpecificSeason(Career career, Player savedPlayer, String typeSeason) {
+        Season season = career.getSeasons().stream()
+                .filter(s -> typeSeason.equals(s.getSeasonName()))
+                .findFirst()
+                .orElseThrow(() -> new InvalidSeasonTypeException(typeSeason));
+
+        if (season.getPlayers() == null) {
+            season.setPlayers(new ArrayList<>());
+        }
+
+        addPlayerToGeneralCareer(career, savedPlayer);
+        season.getPlayers().add(savedPlayer);
+        this.seasonRepository.save(season);
+    }
+
+    private boolean isValidSeason(String typeSeason) {
         return Arrays.stream(TypeSeason.values())
                 .map(TypeSeason::getName)
                 .anyMatch(value -> value.equalsIgnoreCase(typeSeason));
