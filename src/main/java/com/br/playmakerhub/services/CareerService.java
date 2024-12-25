@@ -4,7 +4,6 @@ import com.br.playmakerhub.dto.CareerDTO;
 import com.br.playmakerhub.dto.PlayerDTO;
 import com.br.playmakerhub.dto.PlayerStatsDTO;
 import com.br.playmakerhub.dto.SeasonDTO;
-import com.br.playmakerhub.exceptions.ObjectNotFoundException;
 import com.br.playmakerhub.exceptions.career.CareerNotFoundException;
 import com.br.playmakerhub.exceptions.player.PlayerNotFoundException;
 import com.br.playmakerhub.exceptions.season.InvalidSeasonTypeException;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class CareerService {
@@ -95,9 +93,6 @@ public class CareerService {
         return getStatisticsPlayersCareer(id, pageable, Comparator.comparing(PlayerStatsDTO::getAssists).reversed());
     }
 
-
-
-
     public Career createCareer(CareerDTO careerDTO) {
         if (careerDTO == null) {
             throw new IllegalArgumentException("Career cannot be null");
@@ -140,8 +135,6 @@ public class CareerService {
         return repository.save(career);
     }
 
-
-
     public List<Player> getAvailablePlayersForSeason(String careerId, String seasonName) {
 
         Career career = getCareerById(careerId);
@@ -156,7 +149,8 @@ public class CareerService {
         List<Player> playersInSeason = season.getPlayers();
 
         List<Player> availablePlayers = allPlayers.stream()
-                .filter(player -> !playersInSeason.contains(player))
+                .filter(player -> playersInSeason.stream()
+                        .noneMatch(seasonPlayer -> seasonPlayer.getId().equals(player.getId())))
                 .collect(Collectors.toList());
 
         return availablePlayers;
@@ -203,9 +197,6 @@ public class CareerService {
         return repository.save(career);
     }
 
-
-
-
     public void deleteCareer(String id) {
         Career career = repository.findById(id).orElseThrow(() -> new CareerNotFoundException(
                 "Carreira não encontrada pelo ID"));
@@ -245,9 +236,16 @@ public class CareerService {
         return filteredPlayers;
     }
 
-    public List<Season> getSeasonsByCareer(String careerId) {
-        Career careerOpt = getCareerById(careerId);
-        return careerOpt.getSeasons();
+    public List<Map<String, String>> getSeasonsByCareer(String careerId) {
+        Career career = getCareerById(careerId);
+        return career.getSeasons().stream()
+                .map(season -> {
+                    Map<String, String> seasonData = new HashMap<>();
+                    seasonData.put("id", season.getId());
+                    seasonData.put("seasonName", season.getSeasonName());
+                    return seasonData;
+                })
+                .collect(Collectors.toList());
     }
 
     public Season getSeasonByCareer(String careerId, String typeSeason) {
@@ -318,7 +316,7 @@ public class CareerService {
         career.getPlayers().add(savedPlayer);
     }
 
-    private void addPlayerToSpecificSeason(Career career, Player savedPlayer, String typeSeason) {
+    public void addPlayerToSpecificSeason(Career career, Player savedPlayer, String typeSeason) {
         Season season = career.getSeasons().stream()
                 .filter(s -> typeSeason.equals(s.getSeasonName()))
                 .findFirst()

@@ -12,7 +12,9 @@ public enum TypeSeason {
     TEMPORADA_2021("temporada-21-22"),
     TEMPORADA_2022("temporada-22-23"),
     TEMPORADA_2023("temporada-23-24"),
-    TEMPORADA_2024("temporada-24-25");
+    TEMPORADA_2024("temporada-24-25"),
+    TEMPORADA_2025("temporada-25-26"),
+    TEMPORADA_2026("temporada-26-27");
 
     private String name;
 

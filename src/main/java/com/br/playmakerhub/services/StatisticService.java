@@ -63,17 +63,4 @@ public class StatisticService {
 
         return careerHistory;
     }
-
-//    public List<StatisticsHistory> somaStatisticsToStatisticsHistory(List<Statistics> statistics) {
-//        StatisticsHistory history = new StatisticsHistory();
-//        for (Statistics stats : statistics) {
-//
-//        }
-//        history.setMatches(statistics.getMatches());
-//        history.setAssists(statistics.getAssists());
-//        history.setGoals(statistics.getGoals());
-//        history.setRedCards(statistics.getRedCards());
-//        history.setYellowCards(statistics.getYellowCards());
-//        return history;
-//    }
 }

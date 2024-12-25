@@ -27,6 +27,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/careers")
@@ -215,8 +216,8 @@ public class CareerController {
             @ApiResponse(responseCode = "200", description = "Seasons retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Career not found")
     })
-    public ResponseEntity<List<Season>> getSeasonsByCareer(@PathVariable String careerId) {
-        List<Season> seasonList = service.getSeasonsByCareer(careerId);
+    public ResponseEntity<List<Map<String, String>>> getSeasonsByCareer(@PathVariable String careerId) {
+        List<Map<String, String>> seasonList = service.getSeasonsByCareer(careerId);
         return ResponseEntity.status(HttpStatus.OK).body(seasonList);
     }
 

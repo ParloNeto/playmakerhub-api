@@ -237,4 +237,34 @@ public class PlayerService {
         return statisticsHistory;
     }
 
+    public Player updateStatisticsHistory(Player player, List<Statistics> statisticsBySeasons) {
+        if (statisticsBySeasons == null) {
+            throw new ObjectNotFoundException("List of Statistics is null");
+        }
+
+        int totalMatches = 0;
+        int totalGoals = 0;
+        int totalAssists = 0;
+        int totalYellowCards = 0;
+        int totalRedCards = 0;
+
+        for (Statistics statistics : statisticsBySeasons) {
+            totalMatches += statistics.getMatches();
+            totalGoals += statistics.getGoals();
+            totalAssists += statistics.getAssists();
+            totalYellowCards += statistics.getYellowCards();
+            totalRedCards += statistics.getRedCards();
+        }
+
+        StatisticsHistory statisticsHistory =  player.getStatisticsHistory();
+
+        statisticsHistory.setMatches(totalMatches);
+        statisticsHistory.setGoals(totalGoals);
+        statisticsHistory.setAssists(totalAssists);
+        statisticsHistory.setYellowCards(totalYellowCards);
+        statisticsHistory.setRedCards(totalRedCards);
+
+        return repository.save(player);
+    }
+
 }

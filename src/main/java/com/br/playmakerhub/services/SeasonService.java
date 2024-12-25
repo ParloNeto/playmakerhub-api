@@ -7,6 +7,7 @@ import com.br.playmakerhub.mapper.SeasonMapper;
 import com.br.playmakerhub.models.Career;
 import com.br.playmakerhub.models.Player;
 import com.br.playmakerhub.models.Season;
+import com.br.playmakerhub.models.Statistics;
 import com.br.playmakerhub.repositories.CareerRepository;
 import com.br.playmakerhub.repositories.SeasonRepository;
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 public class SeasonService {
 
     private static final Logger logger = LogManager.getLogger(PlayerService.class);
-    
+
     @Autowired
     private SeasonRepository repository;
 
@@ -33,17 +34,16 @@ public class SeasonService {
     @Autowired
     @Lazy
     private CareerService careerService;
+
+    @Autowired
+    private PlayerService playerService;
     
 
     public List<Season> getAllSeasons() {
         return repository.findAll();
     }
 
-    public List<Season> getAllSeasonsByCareerId(String careerId) {
-        List<Season> seasons = careerService.getCareerById(careerId).getSeasons();
 
-        return seasons;
-    }
 
 
     public Season getSeasonById(String id) {
@@ -81,6 +81,33 @@ public class SeasonService {
         Season season = repository.findById(id).orElseThrow(SeasonNotFoundException::new);
 
         season.setPlayers(player);
+
+        return repository.save(season);
+    }
+
+    public Season removePlayerFromSeason(String seasonId, String playerId) {
+        Season season = repository.findById(seasonId).orElseThrow(SeasonNotFoundException::new);
+
+        Optional<Player> playerFiltered = season.getPlayers().stream()
+                .filter(p -> p.getId().equalsIgnoreCase(playerId))
+                .findFirst();
+
+        if (playerFiltered.isPresent()) {
+            Player player = playerFiltered.get();
+
+            Optional<Statistics> seasonStats = player.getStatisticsBySeasons().stream()
+                    .filter(stats -> stats.getSeason().equalsIgnoreCase(season.getSeasonName()))
+                    .findFirst();
+
+            seasonStats.ifPresent(stats -> player.getStatisticsBySeasons().remove(stats));
+
+            playerService.updateStatisticsHistory(player, player.getStatisticsBySeasons());
+        }
+
+        List<Player> updatedPlayers = season.getPlayers().stream()
+                .filter(player -> !player.getId().equals(playerId))
+                .collect(Collectors.toList());
+        season.setPlayers(updatedPlayers);
 
         return repository.save(season);
     }

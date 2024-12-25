@@ -75,7 +75,6 @@ public interface IPlayerController {
     )
     public ResponseEntity<List<Player>> getAllPlayers();
 
-
     @PostMapping("/{id}/statistics")
     @Operation(summary = "Create a Statistics Player by Season",
             description = "Create a Statistics Player by Season",

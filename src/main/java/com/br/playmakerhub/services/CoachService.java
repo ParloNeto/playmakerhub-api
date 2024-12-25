@@ -31,8 +31,9 @@ public class CoachService {
     }
 
     public Coach getCoachById(String id) {
-        Optional<Coach> coach = repository.findById(id);
-        return coach.orElse(null);
+        Coach coach = repository.findById(id).orElseThrow(() -> new ObjectNotFoundException(
+                "No technician found with this ID"));
+        return coach;
     }
     public Coach createCoach(CoachDTO coachDTO) {
         if (coachDTO == null) {

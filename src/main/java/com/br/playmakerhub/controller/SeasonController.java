@@ -48,6 +48,7 @@ public class SeasonController {
         return ResponseEntity.ok().body(season);
     }
 
+
     @PutMapping("/{seasonId}")
     @Operation(summary = "Updates a Season", description = "Updates a Season",
             tags = {"Season"},
@@ -63,6 +64,28 @@ public class SeasonController {
     public ResponseEntity<Season> updateStatisticsSeason(@PathVariable String seasonId, @RequestBody Season seasonStatistics) {
         Season season = service.updateStatisticsSeason(seasonId, seasonStatistics);
         return ResponseEntity.ok().body(season);
+    }
+
+    @PutMapping("/{seasonId}/remove-player/{playerId}")
+    @Operation(
+            summary = "Remove a player from a Season",
+            description = "Removes a player reference from the specified season without deleting the player",
+            tags = {"Season"},
+            responses = {
+                    @ApiResponse(responseCode = "200", content = @Content, description = "Player removed from season successfully"),
+                    @ApiResponse(description = "No Content", responseCode = "204", content = @Content),
+                    @ApiResponse(description = "Bad Request", responseCode = "400", content = @Content),
+                    @ApiResponse(description = "Unauthorized", responseCode = "401", content = @Content),
+                    @ApiResponse(description = "Not Found", responseCode = "404", content = @Content),
+                    @ApiResponse(description = "Internal Error", responseCode = "500", content = @Content),
+            }
+    )
+    public ResponseEntity<Season> removePlayerFromSeason(
+            @PathVariable String seasonId,
+            @PathVariable String playerId
+    ) {
+        Season updatedSeason = service.removePlayerFromSeason(seasonId, playerId);
+        return ResponseEntity.ok().body(updatedSeason);
     }
 
     @GetMapping
