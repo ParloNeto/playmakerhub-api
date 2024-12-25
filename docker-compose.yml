@@ -9,8 +9,7 @@ services:
       - mongo_data:/data/db
 
   app:
-    build:
-      context: .
+    image: parloneto/playmaker-hub-api:0.0.0
     container_name: playmaker-hub-api
     ports:
       - "8080:8080"
